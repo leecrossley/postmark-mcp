@@ -44,9 +44,16 @@ An MCP server implementation for Postmark email services.
    npm start
    ```
 
-## Available Scripts
-- `npm start`: Runs the server
-- `npm run inspector`: Runs the MCP inspector for debugging
+## Quick Install via Cursor Deeplink
+
+You can quickly install this MCP server in Cursor by clicking the following link:
+
+[Add Postmark MCP Server to Cursor](cursor://anysphere.cursor-deeplink/mcp/install?name=Postmark&config=eyJjb21tYW5kIjoibm9kZSIsImFyZ3MiOlsiaW5kZXguanMiXSwiZW52Ijp7IlBPU1RNQVJLX1NFUlZFUl9UT0tFTiI6IiIsIkRFRkFVTFRfU0VOREVSX0VNQUlMIjoiIiwiREVGQVVMVF9NRVNTQUdFX1NUUkVBTSI6Im91dGJvdW5kIn19)
+
+> **Note**: After clicking the link, you'll need to:
+> 1. Set your `POSTMARK_SERVER_TOKEN` in the MCP configuration
+> 2. Set your `DEFAULT_SENDER_EMAIL` in the MCP configuration
+> 3. Optionally customize the `DEFAULT_MESSAGE_STREAM` (defaults to "outbound")
 
 ## Tool Reference
 
