@@ -54,7 +54,6 @@ This section provides a complete reference for the Postmark MCP server tools, in
   - [listTemplates](#3-listtemplates)
 - [Statistics & Tracking Tools](#statistics--tracking-tools)
   - [getDeliveryStats](#4-getdeliverystats)
-  - [getOutboundMessages](#5-getoutboundmessages)
 
 ## Email Management Tools
 
