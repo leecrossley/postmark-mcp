@@ -1,0 +1,21 @@
+{
+  "name": "postmark-mcp",
+  "version": "1.0.0",
+  "description": "Universal Postmark MCP server using official SDK",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "build": "echo 'No build step needed for JS'",
+    "inspector": "npx @modelcontextprotocol/inspector index.js"
+  },
+  "keywords": ["postmark", "email", "mcp", "ai"],
+  "author": "Jabal Torres",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "node-fetch": "^3.3.2",
+    "postmark": "^4.0.5",
+    "zod": "^3.23.8"
+  }
+}
