@@ -5,6 +5,9 @@ An MCP server implementation for Postmark email services.
 ## Features
 - Exposes a Model Context Protocol (MCP) server for sending emails via Postmark
 - Simple configuration via environment variables
+- Comprehensive error handling and graceful shutdown
+- Secure logging practices (no sensitive data exposure)
+- Automatic email tracking configuration
 
 ## Requirements
 - Node.js (v16 or higher recommended)
@@ -30,16 +33,20 @@ An MCP server implementation for Postmark email services.
      ```
    - Edit `.env` and fill in your Postmark credentials and settings.
 
-   | Variable                | Description                                               | Required |
-   |------------------------|-----------------------------------------------------------|----------|
-   | POSTMARK_SERVER_TOKEN  | Your Postmark server API token                            | Yes      |
-   | DEFAULT_SENDER_EMAIL   | Default sender email address                              | Yes      |
-   | DEFAULT_MESSAGE_STREAM | Postmark message stream (defaults to 'outbound' if unset) | No       |
+   | Variable                | Description                                      | Required |
+   |------------------------|--------------------------------------------------|----------|
+   | POSTMARK_SERVER_TOKEN  | Your Postmark server API token                   | Yes      |
+   | DEFAULT_SENDER_EMAIL   | Default sender email address                     | Yes      |
+   | DEFAULT_MESSAGE_STREAM | Postmark message stream (e.g., 'outbound')      | Yes      |
 
 4. **Run the server:**
    ```sh
-   node index.js
+   npm start
    ```
+
+## Available Scripts
+- `npm start`: Runs the server
+- `npm run inspector`: Runs the MCP inspector for debugging
 
 ## Tool Reference
 
@@ -92,22 +99,12 @@ Sends an email using a pre-defined template.
 
 **Example Prompt:**
 ```
-Send an email with Postmark template alias "welcome" to customer@example.com. Use the following template variables:
-- product_url: https://myfakeapp.com
-- product_name: MyFakeApp
-- name: John Doe
-- action_url: https://myfakeapp.com/register
-- login_url: https://myfakeapp.com/login
-- username: johndoe
-- trial_length: 30 days
-- trial_start_date: 2025-06-01
-- trial_end_date: 2025-07-01
-- support_email: info@myfakeapp.com
-- live_chat_url: https://myfakeapp.com/chat
-- sender_name: MyFakeApp Team
-- help_url: https://myfakeapp.com/help
-- company_name: MyFakeApp
-- company_address: 123 Main St, Anytown, USA
+Send an email with Postmark template alias "welcome" to customer@example.com with the following template variables:
+{
+  "name": "John Doe",
+  "product_name": "MyApp",
+  "login_url": "https://myapp.com/login"
+}
 ```
 
 **Expected Payload:**
@@ -117,19 +114,12 @@ Send an email with Postmark template alias "welcome" to customer@example.com. Us
   "templateId": 12345, // Either templateId or templateAlias must be provided, but not both
   "templateAlias": "welcome", // Either templateId or templateAlias must be provided, but not both
   "templateModel": {
-    "product_url": "https://myfakeapp.com",
-    "product_name": "MyFakeApp",
     "name": "John Doe",
-    "action_url": "https://myfakeapp.com/register",
-    "login_url": "https://myfakeapp.com/login",
-    "username": "johndoe",
-    "trial_length": "30 days",
-    "trial_start_date": "2025-06-01",
-    "trial_end_date": "2025-07-01",
-    "support_email": "info@myfakeapp.com",
+    "product_name": "MyApp",
+    "login_url": "https://myapp.com/login"
   },
   "from": "sender@example.com", // Optional, uses DEFAULT_SENDER_EMAIL if not provided
-  "tag": "orders" // Optional
+  "tag": "onboarding" // Optional
 }
 ```
 
@@ -145,18 +135,11 @@ Send an email with Postmark template alias "welcome" to customer@example.com. Us
 
 ### 3. listTemplates
 
-Lists all available templates. Returns template IDs, aliases, and subjects.
+Lists all available templates.
 
 **Example Prompt:**
 ```
 Show me a list of all the email templates available in our Postmark account.
-```
-
-**Expected Payload:**
-```json
-{
-  "random_string": "any" // Required dummy parameter
-}
 ```
 
 **Response Format:**
@@ -174,14 +157,6 @@ Show me a list of all the email templates available in our Postmark account.
   - Subject: none
 ```
 
-The response includes:
-- Total number of templates
-- For each template:
-  - Template name
-  - Template ID
-  - Template alias (used for referencing in sendEmailWithTemplate)
-  - Subject line (if predefined)
-
 ## Statistics & Tracking Tools
 
 ### 4. getDeliveryStats
@@ -197,9 +172,8 @@ Show me our Postmark email delivery statistics from 2025-05-01 to 2025-05-15 for
 ```json
 {
   "tag": "marketing", // Optional
-  "fromDate": "2025-05-01", // Must be in YYYY-MM-DD format
-  "toDate": "2025-06-01", // Must be in YYYY-MM-DD format
-  "messageStream": "outbound" // Optional
+  "fromDate": "2025-05-01", // Optional, YYYY-MM-DD format
+  "toDate": "2025-05-15" // Optional, YYYY-MM-DD format
 }
 ```
 
@@ -215,46 +189,27 @@ Show me our Postmark email delivery statistics from 2025-05-01 to 2025-05-15 for
 🏷️ Tag: marketing
 ```
 
-## Combined Operation Examples
+## Implementation Details
 
-### Email Campaign Analysis:
+### Automatic Configuration
+All emails are automatically configured with:
+- `TrackOpens: true`
+- `TrackLinks: "HtmlAndText"`
+- Message stream from `DEFAULT_MESSAGE_STREAM` environment variable
 
-**Example Prompt:**
-```
-Help me analyze our email campaign performance:
-1. First, list all our available templates
-2. Then, check our delivery statistics from 2025-05-01 to 2025-06-01 for the "welcome-email" tag
-```
+### Error Handling
+The server implements comprehensive error handling:
+- Validation of all required environment variables
+- Graceful shutdown on SIGTERM and SIGINT
+- Proper error handling for API calls
+- No exposure of sensitive information in logs
+- Consistent error message formatting
 
-**Expected Payloads (Sequential):**
-
-1. listTemplates:
-```json
-{
-  "random_string": "any"
-}
-```
-
-2. getDeliveryStats:
-```json
-{
-  "fromDate": "2025-04-20",
-  "toDate": "2025-05-20"
-}
-```
-
-## Implementation Notes
-
-- All emails are automatically configured with:
-  - `TrackOpens: true`
-  - `TrackLinks: "HtmlAndText"`
-  - Message stream is set to the value of `DEFAULT_MESSAGE_STREAM` (defaults to 'outbound')
-- These settings are not configurable via the API to ensure consistent tracking and delivery.
-- All tool responses include formatted success messages with relevant details:
-  - For email sending: MessageID, recipient, and subject
-  - For template listing: Total count and details of each template
-  - For statistics: Formatted summary with open rates, click rates, and date ranges
+### Logging
+- Uses appropriate log levels (`info` for normal operations, `error` for errors)
+- Excludes sensitive information from logs
+- Provides clear operation status and results
 
 ---
 
-*This document serves as a reference for the Postmark MCP server tools. For more information about Postmark API, visit [Postmark's Developer Documentation](https://postmarkapp.com/developer).* 
+*For more information about the Postmark API, visit [Postmark's Developer Documentation](https://postmarkapp.com/developer).* 
