@@ -57,7 +57,7 @@ You can quickly install this MCP server in Cursor by clicking the following butt
 > **Note**: After clicking the button, you'll need to:
 > 1. Set your `POSTMARK_SERVER_TOKEN` in the MCP configuration
 > 2. Set your `DEFAULT_SENDER_EMAIL` in the MCP configuration
-> 3. Optionally customize the `DEFAULT_MESSAGE_STREAM` (defaults to "outbound")
+> 3. Set your `DEFAULT_MESSAGE_STREAM` in the MCP configuration (defaults to "outbound")
 
 ## Tool Reference
 
