@@ -98,10 +98,10 @@ Send an email using Postmark to recipient@example.com with the subject "Meeting 
 
 **Response Format:**
 ```
-✅ Email sent successfully!
-📧 MessageID: message-id-here
-👤 To: recipient@example.com
-📝 Subject: Meeting Reminder
+Email sent successfully!
+MessageID: message-id-here
+To: recipient@example.com
+Subject: Meeting Reminder
 ```
 
 ### 2. sendEmailWithTemplate
@@ -136,10 +136,10 @@ Send an email with Postmark template alias "welcome" to customer@example.com wit
 
 **Response Format:**
 ```
-✅ Template email sent successfully!
-📧 MessageID: message-id-here
-👤 To: recipient@example.com
-🎯 Template: template-id-or-alias-here
+Template email sent successfully!
+MessageID: message-id-here
+To: recipient@example.com
+Template: template-id-or-alias-here
 ```
 
 ## Template Management Tools
@@ -190,14 +190,14 @@ Show me our Postmark email delivery statistics from 2025-05-01 to 2025-05-15 for
 
 **Response Format:**
 ```
-📊 Email Statistics Summary
+Email Statistics Summary
 
-📤 Sent: 100 emails
-👁️ Open Rate: 45.5% (45/99 tracked emails)
-🔗 Click Rate: 15.2% (15/99 tracked links)
+Sent: 100 emails
+Open Rate: 45.5% (45/99 tracked emails)
+Click Rate: 15.2% (15/99 tracked links)
 
-📅 Period: 2025-05-01 to 2025-05-15
-🏷️ Tag: marketing
+Period: 2025-05-01 to 2025-05-15
+Tag: marketing
 ```
 
 ## Implementation Details
