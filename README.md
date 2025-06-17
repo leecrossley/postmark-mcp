@@ -59,6 +59,24 @@ You can quickly install this MCP server in Cursor by clicking the following butt
 > 2. Set your `DEFAULT_SENDER_EMAIL` in the MCP configuration
 > 3. Set your `DEFAULT_MESSAGE_STREAM` in the MCP configuration (defaults to "outbound")
 
+## Claude and Cursor MCP Configuration Example
+
+```json
+{
+  "mcpServers": {
+    "Postmark": {
+      "command": "your-node-path", // which node
+      "args": ["/Users/your-name/your-location/postmark-mcp/index.js"], // realpath index.js
+      "env": {
+        "POSTMARK_SERVER_TOKEN": "your-postmark-server-token",
+        "DEFAULT_SENDER_EMAIL": "your-default-sender-email",
+        "DEFAULT_MESSAGE_STREAM": "your-default-message-stream"
+      }
+    }
+  }
+}
+```
+
 ## Tool Reference
 
 This section provides a complete reference for the Postmark MCP server tools, including example prompts and expected payloads for each.
