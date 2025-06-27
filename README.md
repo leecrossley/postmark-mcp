@@ -64,13 +64,13 @@ You can quickly install this MCP server in Cursor by clicking the following butt
 ```json
 {
   "mcpServers": {
-    "Postmark": {
-      "command": "your-node-path", // which node
-      "args": ["/Users/your-name/your-location/postmark-mcp/index.js"], // realpath index.js
+    "postmark": {
+      "command": "node",
+      "args": ["path/to/postmark-mcp/index.js"],
       "env": {
         "POSTMARK_SERVER_TOKEN": "your-postmark-server-token",
-        "DEFAULT_SENDER_EMAIL": "your-default-sender-email",
-        "DEFAULT_MESSAGE_STREAM": "your-default-message-stream"
+        "DEFAULT_SENDER_EMAIL": "your-sender-email@example.com",
+        "DEFAULT_MESSAGE_STREAM": "your-message-stream"
       }
     }
   }
