@@ -9,6 +9,9 @@ An MCP server implementation for Postmark email services.
 - Secure logging practices (no sensitive data exposure)
 - Automatic email tracking configuration
 
+## Feedback
+We'd love to hear from you! Please share your feedback and suggestions through our [feedback form](https://forms.gle/zVdZLAJPM81Vo2Wh8).
+
 ## Requirements
 - Node.js (v16 or higher recommended)
 - A Postmark account and server token
