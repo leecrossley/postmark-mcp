@@ -31,7 +31,7 @@ const defaultSender = process.env.DEFAULT_SENDER_EMAIL;
 const defaultMessageStream = process.env.DEFAULT_MESSAGE_STREAM;
 
 // Initialize Postmark client and MCP server
-async function initializeServices() {
+export async function initializeServices() {
   try {
     // Validate required environment variables
     if (!serverToken) {
@@ -77,7 +77,7 @@ async function initializeServices() {
 }
 
 // Start the server
-async function main() {
+export async function main() {
   try {
     const { postmarkClient, mcpServer: server } = await initializeServices();
 
@@ -100,7 +100,7 @@ async function main() {
 }
 
 // Graceful shutdown handler
-async function handleShutdown(server) {
+export async function handleShutdown(server) {
   console.error("Shutting down server...");
   try {
     await server.disconnect();
@@ -118,7 +118,7 @@ async function handleShutdown(server) {
  * @param {string} directoryPath The absolute path to the directory to scan.
  * @returns {Promise<string[]>} An array of directory names.
  */
-async function listTemplateCategories(directoryPath) {
+export async function listTemplateCategories(directoryPath) {
   try {
     // Ensure the provided path is a directory
     if (!existsSync(directoryPath)) {
@@ -154,7 +154,7 @@ async function listTemplateCategories(directoryPath) {
  * @param {string} categoryName The name of the category to inspect.
  * @returns {Promise<string[]>} An array of template names (sub-directory names).
  */
-async function listTemplatesInCategory(templatesBasePath, categoryName) {
+export async function listTemplatesInCategory(templatesBasePath, categoryName) {
   try {
     const categoryPath = join(templatesBasePath, categoryName);
 
@@ -196,7 +196,7 @@ async function listTemplatesInCategory(templatesBasePath, categoryName) {
  * @param {string} format The format to retrieve ('html' or 'text').
  * @returns {Promise<string|null>} The content of the template file, or null if not found.
  */
-async function getTemplateContent(
+export async function getTemplateContent(
   templatesBasePath,
   categoryName,
   templateName,
@@ -236,7 +236,7 @@ async function getTemplateContent(
  * @param {string} topic The topic to search for.
  * @returns {Promise<Array<{category: string, template: string}>>} An array of matching templates.
  */
-async function getTemplateIdeas(templatesBasePath, topic) {
+export async function getTemplateIdeas(templatesBasePath, topic) {
   try {
     const topicLower = topic.toLowerCase();
     const ideas = [];
@@ -301,7 +301,7 @@ process.on("unhandledRejection", (reason) => {
  * or the reason itself, and then exiting the process with a non-zero status code.
  * @param {Error|any} reason - The rejection reason, which can be an `Error` object or any other value.
  */
-function registerTools(server, postmarkClient) {
+export function registerTools(server, postmarkClient) {
   // Define and register the sendEmail tool
   server.tool(
     "sendEmail",
@@ -324,11 +324,11 @@ function registerTools(server, postmarkClient) {
     },
     async ({ to, subject, textBody, htmlBody, from, tag }) => {
       const emailData = {
-        From: from || defaultSender,
+        From: from || process.env.DEFAULT_SENDER_EMAIL,
         To: to,
         Subject: subject,
         TextBody: textBody,
-        MessageStream: defaultMessageStream,
+        MessageStream: process.env.DEFAULT_MESSAGE_STREAM,
         TrackOpens: true,
         TrackLinks: "HtmlAndText",
       };
@@ -381,10 +381,10 @@ function registerTools(server, postmarkClient) {
       }
 
       const emailData = {
-        From: from || defaultSender,
+        From: from || process.env.DEFAULT_SENDER_EMAIL,
         To: to,
         TemplateModel: templateModel,
-        MessageStream: defaultMessageStream,
+        MessageStream: process.env.DEFAULT_MESSAGE_STREAM,
         TrackOpens: true,
         TrackLinks: "HtmlAndText",
       };
@@ -471,7 +471,7 @@ function registerTools(server, postmarkClient) {
       const response = await fetch(url, {
         headers: {
           Accept: "application/json",
-          "X-Postmark-Server-Token": serverToken,
+          "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
         },
       });
 
@@ -1029,7 +1029,7 @@ function registerTools(server, postmarkClient) {
         ),
     },
     async ({ sourceServerID, destinationServerID }) => {
-      if (!accountToken) {
+      if (!process.env.POSTMARK_ACCOUNT_TOKEN) {
         throw new Error(
           "POSTMARK_ACCOUNT_TOKEN environment variable is required for template push operations"
         );
@@ -1048,7 +1048,7 @@ function registerTools(server, postmarkClient) {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
-              "X-Postmark-Account-Token": accountToken,
+              "X-Postmark-Account-Token": process.env.POSTMARK_ACCOUNT_TOKEN,
             },
             body: JSON.stringify({
               SourceServerID: sourceServerID,
@@ -1139,7 +1139,7 @@ function registerTools(server, postmarkClient) {
         ),
     },
     async ({ sourceServerID, destinationServerID }) => {
-      if (!accountToken) {
+      if (!process.env.POSTMARK_ACCOUNT_TOKEN) {
         throw new Error(
           "POSTMARK_ACCOUNT_TOKEN environment variable is required for template push operations"
         );
@@ -1158,7 +1158,7 @@ function registerTools(server, postmarkClient) {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
-              "X-Postmark-Account-Token": accountToken,
+              "X-Postmark-Account-Token": process.env.POSTMARK_ACCOUNT_TOKEN,
             },
             body: JSON.stringify({
               SourceServerID: sourceServerID,
@@ -1219,8 +1219,10 @@ function registerTools(server, postmarkClient) {
   );
 }
 
-// Start the server
-main().catch((error) => {
-  console.error("💥 Failed to start server:", error.message);
-  process.exit(1);
-});
+// Start the server unless running under Vitest
+if (!process.env.VITEST) {
+  main().catch((error) => {
+    console.error("💥 Failed to start server:", error.message);
+    process.exit(1);
+  });
+}

@@ -70,6 +70,16 @@ We'd love to hear from you! Please share your feedback and suggestions through o
    npm start
    ```
 
+6. **Run tests:**
+
+   ```sh
+   npm test
+   # or watch mode
+   npm run test:watch
+   # coverage
+   npm run coverage
+   ```
+
 ## Quick Install via Cursor Deeplink
 
 You can quickly install this MCP server in Cursor by clicking the following button:

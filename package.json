@@ -6,7 +6,11 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "inspector": "npx @modelcontextprotocol/inspector index.js"
+    "inspector": "npx @modelcontextprotocol/inspector index.js",
+    "test": "vitest run --reporter=default",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "lint": "echo 'No linter configured'"
   },
   "keywords": ["postmark", "email", "mcp", "ai"],
   "author": "Jabal Torres",
@@ -17,5 +21,9 @@
     "node-fetch": "^3.3.2",
     "postmark": "^4.0.5",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.0.5",
+    "vitest": "^2.0.5"
   }
 }
