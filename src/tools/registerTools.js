@@ -108,7 +108,11 @@ export function registerTools(server, postmarkClient) {
   server.tool("listTemplateCategories", {}, async () => {
     const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
     logger.info("Listing template categories...");
-    const categories = await listTemplateCategories(templatesBasePath);
+    const categoriesRes = await listTemplateCategories(templatesBasePath);
+    if (!categoriesRes.ok) {
+      return { content: [{ type: "text", text: categoriesRes.message }] };
+    }
+    const categories = categoriesRes.categories;
     logger.info("Template categories listed", { count: categories.length });
     if (categories.length === 0) {
       return { content: [{ type: "text", text: "No template categories found. The postmark-templates/templates-inlined directory may not exist or may be empty." }] };
@@ -123,7 +127,11 @@ export function registerTools(server, postmarkClient) {
     async ({ categoryName }) => {
       const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
       logger.info("Listing templates in category", { categoryName });
-      const templates = await listTemplatesInCategory(templatesBasePath, categoryName);
+      const templatesRes = await listTemplatesInCategory(templatesBasePath, categoryName);
+      if (!templatesRes.ok) {
+        return { content: [{ type: "text", text: templatesRes.message }] };
+      }
+      const templates = templatesRes.templates;
       logger.info("Templates listed", { categoryName, count: templates.length });
       if (templates.length === 0) {
         return { content: [{ type: "text", text: `No templates found in category '${categoryName}'. The category may not exist or may be empty.` }] };
@@ -146,12 +154,12 @@ export function registerTools(server, postmarkClient) {
       if (format !== "html" && format !== "text") {
         return { content: [{ type: "text", text: `Invalid format '${format}'. Please use 'html' or 'text'.` }] };
       }
-      const content = await getTemplateContent(templatesBasePath, categoryName, templateName, format);
-      if (content === null) {
+      const contentRes = await getTemplateContent(templatesBasePath, categoryName, templateName, format);
+      if (!contentRes.ok) {
         return { content: [{ type: "text", text: `Template ${format} content for '${templateName}' in category '${categoryName}' not found.` }] };
       }
       logger.info("Template content retrieved", { templateName, format });
-      return { content: [{ type: "text", text: `Template content for '${templateName}' in category '${categoryName}' (${format} format):\n\n\`\`\`${format}\n${content}\n\`\`\`` }] };
+      return { content: [{ type: "text", text: `Template content for '${templateName}' in category '${categoryName}' (${format} format):\n\n\`\`\`${format}\n${contentRes.content}\n\`\`\`` }] };
     }
   );
 
@@ -161,7 +169,11 @@ export function registerTools(server, postmarkClient) {
     async ({ topic }) => {
       const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
       logger.info("Searching for template ideas", { topic });
-      const ideas = await getTemplateIdeas(templatesBasePath, topic);
+      const ideasRes = await getTemplateIdeas(templatesBasePath, topic);
+      if (!ideasRes.ok) {
+        return { content: [{ type: "text", text: ideasRes.message }] };
+      }
+      const ideas = ideasRes.ideas;
       logger.info("Template ideas found", { topic, count: ideas.length });
       if (ideas.length === 0) {
         return { content: [{ type: "text", text: `No templates found matching the topic '${topic}'. Try a different search term.` }] };

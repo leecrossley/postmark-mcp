@@ -7,21 +7,18 @@ export async function listTemplateCategories(directoryPath) {
     try {
       await access(directoryPath, fsConstants.F_OK | fsConstants.R_OK);
     } catch (_) {
-      console.error(`Error: Directory not found at path: ${directoryPath}`);
-      return [];
+      return { ok: false, code: "NOT_FOUND", message: `Directory not found at path: ${directoryPath}` };
     }
 
     const stat = await lstat(directoryPath);
     if (!stat.isDirectory()) {
-      console.error(`Error: Path is not a directory: ${directoryPath}`);
-      return [];
+      return { ok: false, code: "NOT_DIR", message: `Path is not a directory: ${directoryPath}` };
     }
 
     const entries = await readdir(directoryPath, { withFileTypes: true });
-    return entries.filter((e) => e.isDirectory()).map((e) => e.name);
+    return { ok: true, categories: entries.filter((e) => e.isDirectory()).map((e) => e.name) };
   } catch (error) {
-    console.error("An error occurred while listing template categories:", error);
-    return [];
+    return { ok: false, code: "IO_ERROR", message: String(error?.message || error) };
   }
 }
 
@@ -32,24 +29,18 @@ export async function listTemplatesInCategory(templatesBasePath, categoryName) {
     try {
       await access(categoryPath, fsConstants.F_OK | fsConstants.R_OK);
     } catch (_) {
-      console.error(`Error: Category directory not found at path: ${categoryPath}`);
-      return [];
+      return { ok: false, code: "NOT_FOUND", message: `Category directory not found at path: ${categoryPath}` };
     }
 
     const stat = await lstat(categoryPath);
     if (!stat.isDirectory()) {
-      console.error(`Error: Category path is not a directory: ${categoryPath}`);
-      return [];
+      return { ok: false, code: "NOT_DIR", message: `Category path is not a directory: ${categoryPath}` };
     }
 
     const entries = await readdir(categoryPath, { withFileTypes: true });
-    return entries.filter((e) => e.isDirectory()).map((e) => e.name);
+    return { ok: true, templates: entries.filter((e) => e.isDirectory()).map((e) => e.name) };
   } catch (error) {
-    console.error(
-      `An error occurred while listing templates in category '${categoryName}':`,
-      error
-    );
-    return [];
+    return { ok: false, code: "IO_ERROR", message: String(error?.message || error) };
   }
 }
 
@@ -71,20 +62,13 @@ export async function getTemplateContent(
     try {
       await access(templatePath, fsConstants.F_OK | fsConstants.R_OK);
     } catch (_) {
-      console.error(
-        `Error: Template ${format} content not found at path: ${templatePath}`
-      );
-      return null;
+      return { ok: false, code: "NOT_FOUND", message: `Template ${format} content not found at path: ${templatePath}` };
     }
 
     const content = await readFile(templatePath, "utf8");
-    return content;
+    return { ok: true, content };
   } catch (error) {
-    console.error(
-      `An error occurred while reading template content for '${templateName}' in category '${categoryName}':`,
-      error
-    );
-    return null;
+    return { ok: false, code: "IO_ERROR", message: String(error?.message || error) };
   }
 }
 
@@ -93,14 +77,19 @@ export async function getTemplateIdeas(templatesBasePath, topic) {
     const topicLower = topic.toLowerCase();
     const ideas = [];
 
-    const categories = await listTemplateCategories(templatesBasePath);
+    const categoriesRes = await listTemplateCategories(templatesBasePath);
+    if (!categoriesRes.ok) {
+      return { ok: false, code: categoriesRes.code, message: categoriesRes.message };
+    }
+    const categories = categoriesRes.categories;
     if (categories.length === 0) {
-      console.error("No template categories found");
-      return [];
+      return { ok: true, ideas: [] };
     }
 
     for (const category of categories) {
-      const templates = await listTemplatesInCategory(templatesBasePath, category);
+      const templatesRes = await listTemplatesInCategory(templatesBasePath, category);
+      if (!templatesRes.ok) continue;
+      const templates = templatesRes.templates;
       if (templates.length === 0) continue;
       for (const template of templates) {
         if (template.toLowerCase().includes(topicLower)) {
@@ -109,13 +98,9 @@ export async function getTemplateIdeas(templatesBasePath, topic) {
       }
     }
 
-    return ideas;
+    return { ok: true, ideas };
   } catch (error) {
-    console.error(
-      `An error occurred while searching for template ideas with topic '${topic}':`,
-      error
-    );
-    return [];
+    return { ok: false, code: "IO_ERROR", message: String(error?.message || error) };
   }
 }
 
