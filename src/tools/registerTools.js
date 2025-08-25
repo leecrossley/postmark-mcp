@@ -10,6 +10,10 @@ import { logger } from "../logger.js";
  * @param {import('postmark').ServerClient} postmarkClient
  */
 export function registerTools(server, postmarkClient) {
+  const resolveTemplatesBasePath = () => {
+    const envPath = process.env.POSTMARK_TEMPLATES_PATH || process.env.TEMPLATES_BASE_PATH;
+    return envPath ? envPath : join(process.cwd(), "postmark-templates", "templates-inlined");
+  };
   server.tool(
     "sendEmail",
     {
@@ -106,7 +110,7 @@ export function registerTools(server, postmarkClient) {
   );
 
   server.tool("listTemplateCategories", {}, async () => {
-    const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
+    const templatesBasePath = resolveTemplatesBasePath();
     logger.info("Listing template categories...");
     const categoriesRes = await listTemplateCategories(templatesBasePath);
     if (!categoriesRes.ok) {
@@ -125,7 +129,7 @@ export function registerTools(server, postmarkClient) {
     "listTemplatesInCategory",
     { categoryName: z.string().describe("The name of the template category to list templates from") },
     async ({ categoryName }) => {
-      const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
+      const templatesBasePath = resolveTemplatesBasePath();
       logger.info("Listing templates in category", { categoryName });
       const templatesRes = await listTemplatesInCategory(templatesBasePath, categoryName);
       if (!templatesRes.ok) {
@@ -149,7 +153,7 @@ export function registerTools(server, postmarkClient) {
       format: z.string().optional().describe("The format to retrieve: 'html' or 'text' (default: 'html')"),
     },
     async ({ categoryName, templateName, format = "html" }) => {
-      const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
+      const templatesBasePath = resolveTemplatesBasePath();
       logger.info("Getting template content", { categoryName, templateName, format });
       if (format !== "html" && format !== "text") {
         return { content: [{ type: "text", text: `Invalid format '${format}'. Please use 'html' or 'text'.` }] };
@@ -167,7 +171,7 @@ export function registerTools(server, postmarkClient) {
     "getTemplateIdeas",
     { topic: z.string().describe("The topic to search for in template names") },
     async ({ topic }) => {
-      const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
+      const templatesBasePath = resolveTemplatesBasePath();
       logger.info("Searching for template ideas", { topic });
       const ideasRes = await getTemplateIdeas(templatesBasePath, topic);
       if (!ideasRes.ok) {
