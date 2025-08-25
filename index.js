@@ -86,7 +86,7 @@ export async function main() {
     console.error("Connecting to MCP transport...");
     const transport = new StdioServerTransport();
     await server.connect(transport);
-
+    globalThis.__mcpServer = server;
     console.error("Postmark MCP server is running and ready!");
 
     // Setup graceful shutdown
@@ -203,21 +203,33 @@ export async function getTemplateIdeas(templatesBasePath, topic) {
  * This ensures that unhandled errors do not leave the application in an undefined state.
  * @param {Error} error - The uncaught exception object.
  */
-process.on("uncaughtException", (error) => {
+process.on("uncaughtException", async (error) => {
   console.error("Uncaught exception:", error.message);
-  process.exit(1);
+  try {
+    if (globalThis.__mcpServer && typeof globalThis.__mcpServer.disconnect === "function") {
+      await globalThis.__mcpServer.disconnect();
+    }
+  } finally {
+    process.exit(1);
+  }
 });
 /**
  * Handles unhandled promise rejections by logging the error message or reason
  * and exiting the process with an error code.
  * @param {Error|any} reason - The rejection reason, which can be an Error object or any other value.
  */
-process.on("unhandledRejection", (reason) => {
+process.on("unhandledRejection", async (reason) => {
   console.error(
     "Unhandled rejection:",
     reason instanceof Error ? reason.message : reason
   );
-  process.exit(1);
+  try {
+    if (globalThis.__mcpServer && typeof globalThis.__mcpServer.disconnect === "function") {
+      await globalThis.__mcpServer.disconnect();
+    }
+  } finally {
+    process.exit(1);
+  }
 });
 
 /**
