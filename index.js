@@ -17,6 +17,7 @@ config();
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { getConfig } from "./src/config.js";
 import postmark from "postmark";
 import { registerTools } from "./src/tools/registerTools.js";
 export { registerTools } from "./src/tools/registerTools.js";
@@ -24,35 +25,32 @@ export { listTemplateCategories, listTemplatesInCategory, getTemplateContent, ge
 import { listTemplateCategories as listTemplateCategoriesImpl, listTemplatesInCategory as listTemplatesInCategoryImpl, getTemplateContent as getTemplateContentImpl, getTemplateIdeas as getTemplateIdeasImpl } from "./src/helpers/templates.js";
 import { logger } from "./src/logger.js";
 
-// Postmark configuration
-const serverToken = process.env.POSTMARK_SERVER_TOKEN;
-const accountToken = process.env.POSTMARK_ACCOUNT_TOKEN;
-const defaultSender = process.env.DEFAULT_SENDER_EMAIL;
-const defaultMessageStream = process.env.DEFAULT_MESSAGE_STREAM;
+// Postmark configuration will be resolved during initialization to avoid side effects on import
 
 // Initialize Postmark client and MCP server
 export async function initializeServices() {
   try {
+    const cfg = getConfig();
     // Validate required environment variables
-    if (!serverToken) {
+    if (!cfg.postmark.serverToken) {
       console.error("Error: POSTMARK_SERVER_TOKEN is not set");
       process.exit(1);
     }
-    if (!defaultSender) {
+    if (!cfg.emailDefaults.defaultSender) {
       console.error("Error: DEFAULT_SENDER_EMAIL is not set");
       process.exit(1);
     }
-    if (!defaultMessageStream) {
+    if (!cfg.emailDefaults.defaultMessageStream) {
       console.error("Error: DEFAULT_MESSAGE_STREAM is not set");
       process.exit(1);
     }
 
     console.error("Initializing Postmark MCP server (Official SDK)...");
-    console.error("Default sender:", defaultSender);
-    console.error("Message stream:", defaultMessageStream);
+    console.error("Default sender:", cfg.emailDefaults.defaultSender);
+    console.error("Message stream:", cfg.emailDefaults.defaultMessageStream);
 
     // Initialize Postmark client
-    const client = new postmark.ServerClient(serverToken);
+    const client = new postmark.ServerClient(cfg.postmark.serverToken);
 
     // Verify Postmark client by making a test API call
     await client.getServer();

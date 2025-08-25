@@ -1,4 +1,5 @@
 import { join } from "path";
+import { getTemplatesBasePath } from "../config.js";
 import { z } from "zod";
 import { getTemplateContent, getTemplateIdeas, listTemplateCategories, listTemplatesInCategory } from "../helpers/templates.js";
 import { logger } from "../logger.js";
@@ -10,10 +11,7 @@ import { logger } from "../logger.js";
  * @param {import('postmark').ServerClient} postmarkClient
  */
 export function registerTools(server, postmarkClient) {
-  const resolveTemplatesBasePath = () => {
-    const envPath = process.env.POSTMARK_TEMPLATES_PATH || process.env.TEMPLATES_BASE_PATH;
-    return envPath ? envPath : join(process.cwd(), "postmark-templates", "templates-inlined");
-  };
+  const resolveTemplatesBasePath = () => getTemplatesBasePath();
   server.tool(
     "sendEmail",
     {

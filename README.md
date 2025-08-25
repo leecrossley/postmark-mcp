@@ -46,6 +46,8 @@ We'd love to hear from you! Please share your feedback and suggestions through o
    | POSTMARK_ACCOUNT_TOKEN | Your Postmark account API token (for template push) | No*   |
    | DEFAULT_SENDER_EMAIL   | Default sender email address                     | Yes      |
    | DEFAULT_MESSAGE_STREAM | Postmark message stream (e.g., 'outbound')      | Yes      |
+   | POSTMARK_TEMPLATES_PATH | Absolute path to local templates dir (alias: TEMPLATES_BASE_PATH) | No |
+   | DEBUG                  | Enable verbose debug logs (set to 1)             | No       |
 
    *Required only for template push operations between servers
 
