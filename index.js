@@ -11,18 +11,16 @@
 import { config } from "dotenv";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { readdir, lstat, readFile } from "fs/promises";
-import { existsSync } from "fs";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Load environment variables from .env file
 config();
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
 import postmark from "postmark";
+import { registerTools } from "./src/tools/registerTools.js";
+export { registerTools } from "./src/tools/registerTools.js";
+export { listTemplateCategories, listTemplatesInCategory, getTemplateContent, getTemplateIdeas } from "./src/helpers/templates.js";
 
 // Postmark configuration
 const serverToken = process.env.POSTMARK_SERVER_TOKEN;
