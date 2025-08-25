@@ -22,6 +22,7 @@ import { registerTools } from "./src/tools/registerTools.js";
 export { registerTools } from "./src/tools/registerTools.js";
 export { listTemplateCategories, listTemplatesInCategory, getTemplateContent, getTemplateIdeas } from "./src/helpers/templates.js";
 import { listTemplateCategories as listTemplateCategoriesImpl, listTemplatesInCategory as listTemplatesInCategoryImpl, getTemplateContent as getTemplateContentImpl, getTemplateIdeas as getTemplateIdeasImpl } from "./src/helpers/templates.js";
+import { logger } from "./src/logger.js";
 
 // Postmark configuration
 const serverToken = process.env.POSTMARK_SERVER_TOKEN;
@@ -204,35 +205,68 @@ export async function getTemplateIdeas(templatesBasePath, topic) {
  * This ensures that unhandled errors do not leave the application in an undefined state.
  * @param {Error} error - The uncaught exception object.
  */
-process.on("uncaughtException", async (error) => {
-  console.error("Uncaught exception:", error.message);
+async function handleGlobalError(errorOrReason, eventType) {
   try {
+    const isError = errorOrReason instanceof Error;
+    const errorDetails = isError
+      ? {
+          name: errorOrReason.name,
+          message: errorOrReason.message,
+          stack: errorOrReason.stack,
+          cause:
+            errorOrReason.cause instanceof Error
+              ? {
+                  name: errorOrReason.cause.name,
+                  message: errorOrReason.cause.message,
+                  stack: errorOrReason.cause.stack,
+                }
+              : errorOrReason.cause,
+        }
+      : { reason: errorOrReason };
+
+    logger.error("Global error", {
+      event: eventType,
+      pid: process.pid,
+      node: process.version,
+      platform: process.platform,
+      uptimeSec: Number(process.uptime().toFixed(3)),
+      ...errorDetails,
+    });
+
     if (globalThis.__mcpServer && typeof globalThis.__mcpServer.disconnect === "function") {
-      await globalThis.__mcpServer.disconnect();
-      globalThis.__mcpServer = undefined;
+      try {
+        await globalThis.__mcpServer.disconnect();
+        logger.warn("Server disconnected from global error handler");
+      } catch (shutdownError) {
+        logger.error("Failed to disconnect server during global error handling", {
+          name: shutdownError?.name,
+          message: shutdownError?.message,
+          stack: shutdownError?.stack,
+        });
+      } finally {
+        globalThis.__mcpServer = undefined;
+      }
     }
+  } catch (logError) {
+    // Last-resort fallback to ensure we still exit
+    try {
+      console.error("Global error handler failed:", logError?.message || logError);
+    } catch {}
   } finally {
     process.exit(1);
   }
+}
+
+process.on("uncaughtException", (error) => {
+  void handleGlobalError(error, "uncaughtException");
 });
 /**
  * Handles unhandled promise rejections by logging the error message or reason
  * and exiting the process with an error code.
  * @param {Error|any} reason - The rejection reason, which can be an Error object or any other value.
  */
-process.on("unhandledRejection", async (reason) => {
-  console.error(
-    "Unhandled rejection:",
-    reason instanceof Error ? reason.message : reason
-  );
-  try {
-    if (globalThis.__mcpServer && typeof globalThis.__mcpServer.disconnect === "function") {
-      await globalThis.__mcpServer.disconnect();
-      globalThis.__mcpServer = undefined;
-    }
-  } finally {
-    process.exit(1);
-  }
+process.on("unhandledRejection", (reason) => {
+  void handleGlobalError(reason, "unhandledRejection");
 });
 
 /**
