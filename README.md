@@ -40,14 +40,14 @@ We'd love to hear from you! Please share your feedback and suggestions through o
      ```
    - Edit `.env` and fill in your Postmark credentials and settings.
 
-   | Variable                | Description                                      | Required |
-   |------------------------|--------------------------------------------------|----------|
-   | POSTMARK_SERVER_TOKEN  | Your Postmark server API token                   | Yes      |
-   | POSTMARK_ACCOUNT_TOKEN | Your Postmark account API token (for template push) | No*   |
-   | DEFAULT_SENDER_EMAIL   | Default sender email address                     | Yes      |
-   | DEFAULT_MESSAGE_STREAM | Postmark message stream (e.g., 'outbound')      | Yes      |
-   | POSTMARK_TEMPLATES_PATH | Absolute path to local templates dir (alias: TEMPLATES_BASE_PATH) | No |
-   | DEBUG                  | Enable verbose debug logs (set to 1)             | No       |
+   | Variable                | Description                                         | Required |
+   |-------------------------|-----------------------------------------------------|----------|
+   | POSTMARK_SERVER_TOKEN   | Your Postmark server API token                      | Yes      |
+   | POSTMARK_ACCOUNT_TOKEN  | Your Postmark account API token (for template push) | No*      |
+   | DEFAULT_SENDER_EMAIL    | Default sender email address                        | Yes      |
+   | DEFAULT_MESSAGE_STREAM  | Postmark message stream (e.g., 'outbound')          | Yes      |
+   | POSTMARK_TEMPLATES_PATH | Local templates absolute path (TEMPLATES_BASE_PATH) | No       |
+   | DEBUG                   | Enable verbose debug logs (set to 1)                | No       |
 
    *Required only for template push operations between servers
 
