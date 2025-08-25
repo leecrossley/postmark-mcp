@@ -295,9 +295,10 @@ process.on("unhandledRejection", (reason) => {
 });
 
 /**
- * Handles unhandled promise rejections by logging the error message (if the reason is an `Error` object)
- * or the reason itself, and then exiting the process with a non-zero status code.
- * @param {Error|any} reason - The rejection reason, which can be an `Error` object or any other value.
+ * Registers Postmark MCP tools on the provided server, using zod-validated inputs
+ * and delegating actions to the Postmark client and local helper modules.
+ * @param {import('@modelcontextprotocol/sdk/server/mcp.js').McpServer} server
+ * @param {import('postmark').ServerClient} postmarkClient
  */
 export function registerTools(server, postmarkClient) {
   // Define and register the sendEmail tool
