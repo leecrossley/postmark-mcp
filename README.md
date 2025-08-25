@@ -17,7 +17,7 @@ An MCP server implementation for Postmark email services.
 We'd love to hear from you! Please share your feedback and suggestions through our [feedback form](https://forms.gle/zVdZLAJPM81Vo2Wh8).
 
 ## Requirements
-- Node.js (v16 or higher recommended)
+- Node.js 18 or higher
 - A Postmark account and server token
 
 ## Setup

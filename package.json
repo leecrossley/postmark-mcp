@@ -4,6 +4,9 @@
   "description": "Universal Postmark MCP server using official SDK",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node index.js",
     "inspector": "npx @modelcontextprotocol/inspector index.js",
