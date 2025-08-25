@@ -1,6 +1,7 @@
 import { join } from "path";
 import { z } from "zod";
 import { getTemplateContent, getTemplateIdeas, listTemplateCategories, listTemplatesInCategory } from "../helpers/templates.js";
+import { logger } from "../logger.js";
 
 /**
  * Registers all Postmark-related MCP tools on the provided server instance.
@@ -31,9 +32,9 @@ export function registerTools(server, postmarkClient) {
       };
       if (htmlBody) emailData.HtmlBody = htmlBody;
       if (tag) emailData.Tag = tag;
-      console.log("Sending email...", { to, subject });
+      logger.info("Sending email...", { to, subject });
       const result = await postmarkClient.sendEmail(emailData);
-      console.log("Email sent successfully:", result.MessageID);
+      logger.info("Email sent successfully", { messageId: result.MessageID });
       return { content: [{ type: "text", text: `Email sent successfully!\nMessageID: ${result.MessageID}\nTo: ${to}\nSubject: ${subject}` }] };
     }
   );
@@ -60,17 +61,17 @@ export function registerTools(server, postmarkClient) {
       };
       if (templateId) emailData.TemplateId = templateId; else emailData.TemplateAlias = templateAlias;
       if (tag) emailData.Tag = tag;
-      console.log("Sending template email...", { to, templateId: templateId || templateAlias });
+      logger.info("Sending template email...", { to, templateId: templateId || templateAlias });
       const result = await postmarkClient.sendEmailWithTemplate(emailData);
-      console.log("Template email sent successfully:", result.MessageID);
+      logger.info("Template email sent successfully", { messageId: result.MessageID });
       return { content: [{ type: "text", text: `Template email sent successfully!\nMessageID: ${result.MessageID}\nTo: ${to}\nTemplate: ${templateId || templateAlias}` }] };
     }
   );
 
   server.tool("listTemplates", {}, async () => {
-    console.log("Fetching templates...");
+    logger.info("Fetching templates...");
     const result = await postmarkClient.getTemplates();
-    console.log(`Found ${result.Templates.length} templates`);
+    logger.info("Templates fetched", { count: result.Templates.length });
     const templateList = result.Templates.map((t) => `• **${t.Name}**\n  - ID: ${t.TemplateId}\n  - Alias: ${t.Alias || "none"}\n  - Subject: ${t.Subject || "none"}`).join("\n\n");
     return { content: [{ type: "text", text: `Found ${result.Templates.length} templates:\n\n${templateList}` }] };
   });
@@ -88,11 +89,11 @@ export function registerTools(server, postmarkClient) {
       if (toDate) query.push(`todate=${encodeURIComponent(toDate)}`);
       if (tag) query.push(`tag=${encodeURIComponent(tag)}`);
       const url = `https://api.postmarkapp.com/stats/outbound${query.length ? "?" + query.join("&") : ""}`;
-      console.log("Fetching delivery stats...");
+      logger.info("Fetching delivery stats...");
       const response = await fetch(url, { headers: { Accept: "application/json", "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN } });
       if (!response.ok) throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       const data = await response.json();
-      console.log("Stats retrieved successfully");
+      logger.info("Stats retrieved successfully");
       const sent = data.Sent || 0;
       const tracked = data.Tracked || 0;
       const uniqueOpens = data.UniqueOpens || 0;
@@ -106,9 +107,9 @@ export function registerTools(server, postmarkClient) {
 
   server.tool("listTemplateCategories", {}, async () => {
     const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
-    console.log("Listing template categories...");
+    logger.info("Listing template categories...");
     const categories = await listTemplateCategories(templatesBasePath);
-    console.log(`Found ${categories.length} template categories`);
+    logger.info("Template categories listed", { count: categories.length });
     if (categories.length === 0) {
       return { content: [{ type: "text", text: "No template categories found. The postmark-templates/templates-inlined directory may not exist or may be empty." }] };
     }
@@ -121,9 +122,9 @@ export function registerTools(server, postmarkClient) {
     { categoryName: z.string().describe("The name of the template category to list templates from") },
     async ({ categoryName }) => {
       const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
-      console.log(`Listing templates in category: ${categoryName}`);
+      logger.info("Listing templates in category", { categoryName });
       const templates = await listTemplatesInCategory(templatesBasePath, categoryName);
-      console.log(`Found ${templates.length} templates in category '${categoryName}'`);
+      logger.info("Templates listed", { categoryName, count: templates.length });
       if (templates.length === 0) {
         return { content: [{ type: "text", text: `No templates found in category '${categoryName}'. The category may not exist or may be empty.` }] };
       }
@@ -141,7 +142,7 @@ export function registerTools(server, postmarkClient) {
     },
     async ({ categoryName, templateName, format = "html" }) => {
       const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
-      console.log(`Getting template content: ${categoryName}/${templateName} (format: ${format})`);
+      logger.info("Getting template content", { categoryName, templateName, format });
       if (format !== "html" && format !== "text") {
         return { content: [{ type: "text", text: `Invalid format '${format}'. Please use 'html' or 'text'.` }] };
       }
@@ -149,7 +150,7 @@ export function registerTools(server, postmarkClient) {
       if (content === null) {
         return { content: [{ type: "text", text: `Template ${format} content for '${templateName}' in category '${categoryName}' not found.` }] };
       }
-      console.log(`Successfully retrieved ${format} content for template '${templateName}'`);
+      logger.info("Template content retrieved", { templateName, format });
       return { content: [{ type: "text", text: `Template content for '${templateName}' in category '${categoryName}' (${format} format):\n\n\`\`\`${format}\n${content}\n\`\`\`` }] };
     }
   );
@@ -159,9 +160,9 @@ export function registerTools(server, postmarkClient) {
     { topic: z.string().describe("The topic to search for in template names") },
     async ({ topic }) => {
       const templatesBasePath = join(process.cwd(), "postmark-templates", "templates-inlined");
-      console.log(`Searching for template ideas with topic: ${topic}`);
+      logger.info("Searching for template ideas", { topic });
       const ideas = await getTemplateIdeas(templatesBasePath, topic);
-      console.log(`Found ${ideas.length} template ideas for topic '${topic}'`);
+      logger.info("Template ideas found", { topic, count: ideas.length });
       if (ideas.length === 0) {
         return { content: [{ type: "text", text: `No templates found matching the topic '${topic}'. Try a different search term.` }] };
       }
@@ -181,13 +182,13 @@ export function registerTools(server, postmarkClient) {
     },
     async ({ name, subject, htmlBody, textBody, alias }) => {
       if (!htmlBody && !textBody) throw new Error("Either htmlBody or textBody must be provided");
-      console.log("Creating new template...", { name, subject, alias });
+      logger.info("Creating new template...", { name, subject, alias });
       const templateData = { Name: name, Subject: subject };
       if (htmlBody) templateData.HtmlBody = htmlBody;
       if (textBody) templateData.TextBody = textBody;
       if (alias) templateData.Alias = alias;
       const result = await postmarkClient.createTemplate(templateData);
-      console.log("Template created successfully:", result.TemplateId);
+      logger.info("Template created successfully", { templateId: result.TemplateId });
       return { content: [{ type: "text", text: `Template created successfully!\n\nTemplate ID: ${result.TemplateId}\nName: ${result.Name}\nSubject: ${result.Subject}\nAlias: ${result.Alias || "none"}\nActive: ${result.Active ? "Yes" : "No"}` }] };
     }
   );
@@ -203,7 +204,7 @@ export function registerTools(server, postmarkClient) {
       alias: z.string().optional().describe("New template alias (optional)"),
     },
     async ({ templateIdOrAlias, name, subject, htmlBody, textBody, alias }) => {
-      console.log("Updating template...", { templateIdOrAlias, name, subject, alias });
+      logger.info("Updating template...", { templateIdOrAlias, name, subject, alias });
       const updateData = {};
       if (name !== undefined) updateData.Name = name;
       if (subject !== undefined) updateData.Subject = subject;
@@ -212,7 +213,7 @@ export function registerTools(server, postmarkClient) {
       if (alias !== undefined) updateData.Alias = alias;
       if (Object.keys(updateData).length === 0) throw new Error("At least one field must be provided to update");
       const result = await postmarkClient.editTemplate(templateIdOrAlias, updateData);
-      console.log("Template updated successfully:", result.TemplateId);
+      logger.info("Template updated successfully", { templateId: result.TemplateId });
       return { content: [{ type: "text", text: `Template updated successfully!\n\nTemplate ID: ${result.TemplateId}\nName: ${result.Name}\nSubject: ${result.Subject}\nAlias: ${result.Alias || "none"}\nActive: ${result.Active ? "Yes" : "No"}` }] };
     }
   );
@@ -221,9 +222,9 @@ export function registerTools(server, postmarkClient) {
     "deleteTemplate",
     { templateIdOrAlias: z.string().describe("Template ID or alias to delete") },
     async ({ templateIdOrAlias }) => {
-      console.log("Deleting template...", { templateIdOrAlias });
+      logger.info("Deleting template...", { templateIdOrAlias });
       const result = await postmarkClient.deleteTemplate(templateIdOrAlias);
-      console.log(`Template ${templateIdOrAlias} deleted successfully.`);
+      logger.info("Template deleted successfully", { templateIdOrAlias });
       return { content: [{ type: "text", text: `Template deleted successfully!\n\nTemplate ID/Alias: ${templateIdOrAlias}\nStatus: ${result.Message || "Deleted"}\n\nNote: This action has been logged for auditing purposes.` }] };
     }
   );
@@ -238,7 +239,7 @@ export function registerTools(server, postmarkClient) {
       if (!process.env.POSTMARK_ACCOUNT_TOKEN) {
         throw new Error("POSTMARK_ACCOUNT_TOKEN environment variable is required for template push operations");
       }
-      console.log("Simulating template push...", { sourceServerID, destinationServerID });
+      logger.info("Simulating template push...", { sourceServerID, destinationServerID });
       const response = await fetch("https://api.postmarkapp.com/templates/push", {
         method: "PUT",
         headers: { Accept: "application/json", "Content-Type": "application/json", "X-Postmark-Account-Token": process.env.POSTMARK_ACCOUNT_TOKEN },
@@ -249,7 +250,7 @@ export function registerTools(server, postmarkClient) {
         throw new Error(`Postmark API Error (${response.status}): ${errorData.Message || response.statusText}`);
       }
       const result = await response.json();
-      console.log(`Template push simulation completed. ${result.TotalCount} templates would be affected.`);
+      logger.info("Template push simulation completed", { total: result.TotalCount });
       const templatesList = result.Templates.map((t) => `• **${t.Name}** (${t.Alias || "no alias"})\n  - Action: ${t.Action}\n  - Type: ${t.TemplateType}\n  - Template ID: ${t.TemplateId || "N/A"}`).join("\n\n");
       return { content: [{ type: "text", text: `Template Push Simulation Results\n\nSource Server ID: ${sourceServerID}\nDestination Server ID: ${destinationServerID}\nTotal Templates Affected: ${result.TotalCount}\n\n${result.TotalCount > 0 ? `Templates that would be affected:\n\n${templatesList}` : "No templates would be affected."}\n\nNote: This was a simulation only. No changes were made.` }] };
     }
@@ -265,7 +266,7 @@ export function registerTools(server, postmarkClient) {
       if (!process.env.POSTMARK_ACCOUNT_TOKEN) {
         throw new Error("POSTMARK_ACCOUNT_TOKEN environment variable is required for template push operations");
       }
-      console.log("Executing template push...", { sourceServerID, destinationServerID });
+      logger.info("Executing template push...", { sourceServerID, destinationServerID });
       const response = await fetch("https://api.postmarkapp.com/templates/push", {
         method: "PUT",
         headers: { Accept: "application/json", "Content-Type": "application/json", "X-Postmark-Account-Token": process.env.POSTMARK_ACCOUNT_TOKEN },
@@ -276,7 +277,7 @@ export function registerTools(server, postmarkClient) {
         throw new Error(`Postmark API Error (${response.status}): ${errorData.Message || response.statusText}`);
       }
       const result = await response.json();
-      console.log(`Template push executed successfully. ${result.TotalCount} templates were processed.`);
+      logger.info("Template push executed successfully", { total: result.TotalCount });
       const templatesList = result.Templates.map((t) => `• **${t.Name}** (${t.Alias || "no alias"})\n  - Action: ${t.Action}\n  - Type: ${t.TemplateType}\n  - Template ID: ${t.TemplateId || "N/A"}`).join("\n\n");
       return { content: [{ type: "text", text: `Template Push Execution Results\n\nSource Server ID: ${sourceServerID}\nDestination Server ID: ${destinationServerID}\nTotal Templates Processed: ${result.TotalCount}\n\n${result.TotalCount > 0 ? `Templates that were processed:\n\n${templatesList}` : "No templates were processed."}\n\nNote: Changes have been applied to the destination server.` }] };
     }
