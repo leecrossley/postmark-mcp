@@ -21,6 +21,7 @@ import postmark from "postmark";
 import { registerTools } from "./src/tools/registerTools.js";
 export { registerTools } from "./src/tools/registerTools.js";
 export { listTemplateCategories, listTemplatesInCategory, getTemplateContent, getTemplateIdeas } from "./src/helpers/templates.js";
+import { listTemplateCategories as listTemplateCategoriesImpl, listTemplatesInCategory as listTemplatesInCategoryImpl, getTemplateContent as getTemplateContentImpl, getTemplateIdeas as getTemplateIdeasImpl } from "./src/helpers/templates.js";
 
 // Postmark configuration
 const serverToken = process.env.POSTMARK_SERVER_TOKEN;
@@ -119,24 +120,8 @@ export async function handleShutdown(server) {
 export async function listTemplateCategories(directoryPath) {
   try {
     // Ensure the provided path is a directory
-    if (!existsSync(directoryPath)) {
-      console.error(`Error: Directory not found at path: ${directoryPath}`);
-      return [];
-    }
-
-    const stat = await lstat(directoryPath);
-    if (!stat.isDirectory()) {
-      console.error(`Error: Path is not a directory: ${directoryPath}`);
-      return [];
-    }
-
-    const entries = await readdir(directoryPath, { withFileTypes: true });
-
-    const directories = entries
-      .filter((dirent) => dirent.isDirectory())
-      .map((dirent) => dirent.name);
-
-    return directories;
+    // Delegate to module implementation (kept for backward compatibility)
+    return await listTemplateCategoriesImpl(directoryPath);
   } catch (error) {
     console.error(
       "An error occurred while listing template categories:",
@@ -154,29 +139,7 @@ export async function listTemplateCategories(directoryPath) {
  */
 export async function listTemplatesInCategory(templatesBasePath, categoryName) {
   try {
-    const categoryPath = join(templatesBasePath, categoryName);
-
-    // Check for existence and ensure it's a directory
-    if (!existsSync(categoryPath)) {
-      console.error(
-        `Error: Category directory not found at path: ${categoryPath}`
-      );
-      return [];
-    }
-
-    const stat = await lstat(categoryPath);
-    if (!stat.isDirectory()) {
-      console.error(`Error: Category path is not a directory: ${categoryPath}`);
-      return [];
-    }
-
-    const entries = await readdir(categoryPath, { withFileTypes: true });
-
-    const templateDirectories = entries
-      .filter((dirent) => dirent.isDirectory())
-      .map((dirent) => dirent.name);
-
-    return templateDirectories;
+    return await listTemplatesInCategoryImpl(templatesBasePath, categoryName);
   } catch (error) {
     console.error(
       `An error occurred while listing templates in category '${categoryName}':`,
@@ -201,24 +164,12 @@ export async function getTemplateContent(
   format = "html"
 ) {
   try {
-    const fileName = format === "text" ? "content.txt" : "content.html";
-    const templatePath = join(
+    return await getTemplateContentImpl(
       templatesBasePath,
       categoryName,
       templateName,
-      fileName
+      format
     );
-
-    // Check if the file exists
-    if (!existsSync(templatePath)) {
-      console.error(
-        `Error: Template ${format} content not found at path: ${templatePath}`
-      );
-      return null;
-    }
-
-    const content = await readFile(templatePath, "utf8");
-    return content;
   } catch (error) {
     console.error(
       `An error occurred while reading template content for '${templateName}' in category '${categoryName}':`,
@@ -236,32 +187,7 @@ export async function getTemplateContent(
  */
 export async function getTemplateIdeas(templatesBasePath, topic) {
   try {
-    const topicLower = topic.toLowerCase();
-    const ideas = [];
-
-    const categories = await listTemplateCategories(templatesBasePath);
-    if (categories.length === 0) {
-      console.error("No template categories found");
-      return [];
-    }
-
-    for (const category of categories) {
-      const templates = await listTemplatesInCategory(
-        templatesBasePath,
-        category
-      );
-      if (templates.length === 0) {
-        continue; // Skip empty categories
-      }
-
-      for (const template of templates) {
-        if (template.toLowerCase().includes(topicLower)) {
-          ideas.push({ category, template });
-        }
-      }
-    }
-
-    return ideas;
+    return await getTemplateIdeasImpl(templatesBasePath, topic);
   } catch (error) {
     console.error(
       `An error occurred while searching for template ideas with topic '${topic}':`,
@@ -300,7 +226,7 @@ process.on("unhandledRejection", (reason) => {
  * @param {import('@modelcontextprotocol/sdk/server/mcp.js').McpServer} server
  * @param {import('postmark').ServerClient} postmarkClient
  */
-export function registerTools(server, postmarkClient) {
+/* moved to module */ function registerTools_removed(server, postmarkClient) {
   // Define and register the sendEmail tool
   server.tool(
     "sendEmail",

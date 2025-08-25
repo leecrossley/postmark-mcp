@@ -1,10 +1,12 @@
 import { join } from "path";
-import { readdir, lstat, readFile } from "fs/promises";
-import { existsSync } from "fs";
+import { readdir, lstat, readFile, access } from "fs/promises";
+import { constants as fsConstants } from "fs";
 
 export async function listTemplateCategories(directoryPath) {
   try {
-    if (!existsSync(directoryPath)) {
+    try {
+      await access(directoryPath, fsConstants.F_OK | fsConstants.R_OK);
+    } catch (_) {
       console.error(`Error: Directory not found at path: ${directoryPath}`);
       return [];
     }
@@ -27,7 +29,9 @@ export async function listTemplatesInCategory(templatesBasePath, categoryName) {
   try {
     const categoryPath = join(templatesBasePath, categoryName);
 
-    if (!existsSync(categoryPath)) {
+    try {
+      await access(categoryPath, fsConstants.F_OK | fsConstants.R_OK);
+    } catch (_) {
       console.error(`Error: Category directory not found at path: ${categoryPath}`);
       return [];
     }
@@ -64,7 +68,9 @@ export async function getTemplateContent(
       fileName
     );
 
-    if (!existsSync(templatePath)) {
+    try {
+      await access(templatePath, fsConstants.F_OK | fsConstants.R_OK);
+    } catch (_) {
       console.error(
         `Error: Template ${format} content not found at path: ${templatePath}`
       );
