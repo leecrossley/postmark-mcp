@@ -117,19 +117,17 @@ export async function handleShutdown(server) {
 /**
  * Lists the names of all sub-directories within a given path.
  * @param {string} directoryPath The absolute path to the directory to scan.
- * @returns {Promise<string[]>} An array of directory names.
+ * @returns {Promise<{ok: boolean, categories?: string[], code?: string, message?: string}>}
  */
 export async function listTemplateCategories(directoryPath) {
   try {
-    // Ensure the provided path is a directory
-    // Delegate to module implementation (kept for backward compatibility)
     return await listTemplateCategoriesImpl(directoryPath);
   } catch (error) {
-    console.error(
-      "An error occurred while listing template categories:",
-      error
-    );
-    return []; // Return empty array on error as per acceptance criteria
+    logger.error("An error occurred while listing template categories", {
+      message: error?.message,
+      stack: error?.stack,
+    });
+    return { ok: false, code: 'UNEXPECTED_ERROR', message: `An unexpected error occurred: ${error?.message || String(error)}` };
   }
 }
 
@@ -137,17 +135,18 @@ export async function listTemplateCategories(directoryPath) {
  * Lists the names of all template sub-directories within a specific category directory.
  * @param {string} templatesBasePath The absolute path to the root templates folder.
  * @param {string} categoryName The name of the category to inspect.
- * @returns {Promise<string[]>} An array of template names (sub-directory names).
+ * @returns {Promise<{ok: boolean, templates?: string[], code?: string, message?: string}>}
  */
 export async function listTemplatesInCategory(templatesBasePath, categoryName) {
   try {
     return await listTemplatesInCategoryImpl(templatesBasePath, categoryName);
   } catch (error) {
-    console.error(
-      `An error occurred while listing templates in category '${categoryName}':`,
-      error
-    );
-    return []; // Return empty array on any other error
+    logger.error("An error occurred while listing templates in category", {
+      categoryName,
+      message: error?.message,
+      stack: error?.stack,
+    });
+    return { ok: false, code: 'UNEXPECTED_ERROR', message: `An unexpected error occurred: ${error?.message || String(error)}` };
   }
 }
 
@@ -157,7 +156,7 @@ export async function listTemplatesInCategory(templatesBasePath, categoryName) {
  * @param {string} categoryName The name of the category.
  * @param {string} templateName The name of the template.
  * @param {string} format The format to retrieve ('html' or 'text').
- * @returns {Promise<string|null>} The content of the template file, or null if not found.
+ * @returns {Promise<{ok: boolean, content?: string, code?: string, message?: string}>}
  */
 export async function getTemplateContent(
   templatesBasePath,
@@ -173,11 +172,14 @@ export async function getTemplateContent(
       format
     );
   } catch (error) {
-    console.error(
-      `An error occurred while reading template content for '${templateName}' in category '${categoryName}':`,
-      error
-    );
-    return null;
+    logger.error("An error occurred while reading template content", {
+      categoryName,
+      templateName,
+      format,
+      message: error?.message,
+      stack: error?.stack,
+    });
+    return { ok: false, code: 'UNEXPECTED_ERROR', message: `An unexpected error occurred: ${error?.message || String(error)}` };
   }
 }
 
@@ -185,17 +187,18 @@ export async function getTemplateContent(
  * Searches across all template categories and names to find templates matching a given topic.
  * @param {string} templatesBasePath The absolute path to the root templates folder.
  * @param {string} topic The topic to search for.
- * @returns {Promise<Array<{category: string, template: string}>>} An array of matching templates.
+ * @returns {Promise<{ok: boolean, ideas?: Array<{category: string, template: string}>, code?: string, message?: string}>}
  */
 export async function getTemplateIdeas(templatesBasePath, topic) {
   try {
     return await getTemplateIdeasImpl(templatesBasePath, topic);
   } catch (error) {
-    console.error(
-      `An error occurred while searching for template ideas with topic '${topic}':`,
-      error
-    );
-    return [];
+    logger.error("An error occurred while searching for template ideas", {
+      topic,
+      message: error?.message,
+      stack: error?.stack,
+    });
+    return { ok: false, code: 'UNEXPECTED_ERROR', message: `An unexpected error occurred: ${error?.message || String(error)}` };
   }
 }
 
